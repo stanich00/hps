@@ -15,14 +15,14 @@ TEMPLATE = app
 
 
 SOURCES += \
-    ../src/TestSimpleServer.cpp \
     ../src/HpsLocker.cpp \
     ../src/HpsMutex.cpp \
     ../src/HpsCommon.cpp \
     ../src/HpsLog.cpp \
     ../src/HpsProgArgs.cpp \
     ../src/HpsConfig.cpp \
-    ../src/HpsTcpServer.cpp
+    ../src/HpsTcpServer.cpp \
+    ../src/main.cpp
 
 HEADERS += \
     ../src/HpsLog.h \
