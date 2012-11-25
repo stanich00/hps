@@ -114,90 +114,6 @@ namespace Hps
 
     void TcpServerEPoll::Accept(int sfd)const
     {
-//        // client connection descriptors
-//        std::set<int> clients;
-
-//        for(;;)
-//        {
-//            // initialize read connection set
-//            fd_set readFdSet;
-//            FD_ZERO(&readFdSet);
-//            FD_SET(fdSocket, &readFdSet);
-
-//            for(std::set<int>::iterator it = clients.begin(), ti = clients.end(); it != ti; ++it)
-//                FD_SET(*it, &readFdSet);
-
-//            // init timeout
-//            timeval timeout;
-//            memset(&timeout, 0, sizeof(timeout));
-//            timeout.tv_sec = 10;
-//            timeout.tv_usec = 0;
-
-//            // wait for an event in one of connections
-//            int maxFd = std::max(fdSocket, *std::max_element(clients.begin(), clients.end()));
-//            int readyFd = select(maxFd + 1, &readFdSet, 0, 0, &timeout);
-//            if(readyFd < 0)
-//            {
-//                shutdown(fdSocket, SHUT_RDWR);
-//                close(fdSocket);
-//                throw std::runtime_error("Error in select");
-//            }
-
-//            // if there are no ready for reading descriptors, continue
-//            if(readyFd == 0)
-//                continue;
-
-//            // check if there are new connection
-//            if(FD_ISSET(fdSocket, &readFdSet))
-//            {
-//                struct sockaddr_storage addr;
-//                socklen_t addrlen = 0;
-//                memset(&addr, 0, sizeof(addr));
-
-//                // accept new connection
-//                int fdConn = accept(fdSocket, (struct sockaddr*)&addr, &addrlen);
-//                if(fdConn < 0)
-//                {
-//                    shutdown(fdConn, SHUT_RDWR);
-//                    close(fdConn);
-//                    throw std::runtime_error("Error in accepting");
-//                }
-
-//                // set non-blocking mode to new connection
-//                int const flags = fcntl(fdConn, F_GETFL, 0);
-//                if(flags < 0)
-//                    throw std::runtime_error("F_GETFL error (client)");
-//                if(fcntl(fdConn, F_SETFL, flags | O_NONBLOCK) < 0)
-//                    throw std::runtime_error("F_SETFL error (client)");
-
-//                // add new connection descriptor
-//                clients.insert(fdConn);
-//            }
-
-//            // handle connections
-//            std::vector<int> toRemove;
-//            toRemove.reserve(clients.size());
-//            for(std::set<int>::const_iterator it = clients.begin(), ti = clients.end(); it != ti; ++it)
-//            {
-//                if(FD_ISSET(*it, &readFdSet))
-//                {
-//                    // handle connection (read/write data)
-//                    if(HandleConnection(*it, m_config) != 0)
-//                        GetLog().Msg(Log::Error, "Could not handle connection");
-
-//                    // close connection
-//                    shutdown(*it, SHUT_RDWR);
-//                    close(*it);
-
-//                    // put connection descriptor to remove it later on
-//                    toRemove.push_back(*it);
-//                }
-//            }
-//            // remove handled connection descriptors
-//            for(std::vector<int>::const_iterator it = toRemove.begin(), ti = toRemove.end(); it != ti; ++it)
-//                clients.erase(*it);
-//        }
-
         int efd = epoll_create1(0);
         if (efd == -1)
             throw std::runtime_error("Error in epoll_create1");
@@ -228,7 +144,7 @@ namespace Hps
                 }
                 else if(sfd == events[i].data.fd)
                 {
-                    // We have a notification on the listening socket, which means one or more incoming connections
+                    // a notification on the listening socket (one or more incoming connections)
                     for(;;)
                     {
                         sockaddr in_addr;
@@ -279,11 +195,6 @@ namespace Hps
                 }
                 else
                 {
-                    // We have data on the fd waiting to be read. Read and
-                    // display it. We must read whatever data is available
-                    // completely, as we are running in edge-triggered mode
-                    // and won't get a notification again for the same
-                    // data
                     HandleConnection(events[i].data.fd, m_config);
                     if(HandleConnection(events[i].data.fd, m_config) != 0)
                         GetLog().Msg(Log::Error, "Could not handle connection");
@@ -291,49 +202,6 @@ namespace Hps
                     // close connection
                     shutdown(events[i].data.fd, SHUT_RDWR);
                     close(events[i].data.fd);
-
-                    // Handle connection
-//                    int done = 0;
-
-//                    for(;;)
-//                    {
-//                        ssize_t count = 0;
-//                        char buf[512];
-
-//                        count = read (events[i].data.fd, buf, sizeof(buf));
-//                        if (count == -1)
-//                        {
-//                            // If errno == EAGAIN, that means we have read all data. So go back to the main loop
-//                            if(errno != EAGAIN)
-//                            {
-//                                  GetLog().Msg(Log::Error, "Error in read");
-//                                  done = 1;
-//                            }
-//                            break;
-//                        }
-//                        else if(count == 0)
-//                        {
-//                            // End of file. The remote has closed the connection
-//                            done = 1;
-//                            break;
-//                        }
-
-//                        // Write the buffer to standard output
-//                        if(write (1, buf, count) == -1)
-//                        {
-//                            perror ("write");
-//                            abort ();
-//                        }
-//                    }
-
-//                    if (done)
-//                    {
-//                        printf ("Closed connection on descriptor %d\n", events[i].data.fd);
-
-//                        /* Closing the descriptor will make epoll remove it
-//                             from the set of descriptors which are monitored. */
-//                        close (events[i].data.fd);
-//                    }
                 }
             }
         } // for(;;)
