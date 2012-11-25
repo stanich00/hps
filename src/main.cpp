@@ -4,6 +4,7 @@
 #include "HpsLog.h"
 #include "HpsStdOutLogWriter.h"
 #include "HpsTcpServer.h"
+#include "HpsTcpServerEPoll.h"
 #include "HpsProgArgs.h"
 #include <memory>
 #include <cassert>
@@ -21,7 +22,8 @@ int main(int argc, char * argv[])
     g_log.reset(new Log(Log::Error, LogWriterPtr(new StdOutLogWriter())));
 
     // create server
-    TCPServer server;
+    //TCPServer server;
+    TcpServerEPoll server;
 
     // run server
     return server.Run(ProgArgs(argc, argv));
