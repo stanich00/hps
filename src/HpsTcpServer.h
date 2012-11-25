@@ -1,8 +1,8 @@
 
 // Copyright (C) Stanislav Cherkasov
 
-#ifndef HPSTCPSERVER_H_e580d236_740d_4857_b3f7_be43482abf76
-#define HPSTCPSERVER_H_e580d236_740d_4857_b3f7_be43482abf76
+#ifndef HPSTCPSERVER_H_E580D236_740D_4857_B3F7_BE43482ABF76
+#define HPSTCPSERVER_H_E580D236_740D_4857_B3F7_BE43482ABF76
 
 #include "HpsConfig.h"
 #include "HpsProgArgs.h"
@@ -12,9 +12,6 @@ namespace Hps
     class TCPServer
     {
     public:
-        // c-tor
-        TCPServer();
-
         // run server
         int Run(ProgArgs const& progArgs);
 
@@ -33,4 +30,4 @@ namespace Hps
     };
 } // namespace Hps
 
-#endif // HPSTCPSERVER_H_e580d236_740d_4857_b3f7_be43482abf76
+#endif // HPSTCPSERVER_H_E580D236_740D_4857_B3F7_BE43482ABF76

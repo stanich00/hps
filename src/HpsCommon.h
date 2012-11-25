@@ -16,8 +16,12 @@ namespace Hps
 {
     // default config dir
     char const* const defaultConfigDir = "~/.hps/";
+
     // default name of config file
     char const* const defaultConfigFileName = "hps.cfg";
+
+    // max number of events
+    int const nMaxEventCount = 64;
 
     // get log
     Hps::Log & GetLog();

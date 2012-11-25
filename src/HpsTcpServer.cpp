@@ -20,10 +20,6 @@
 
 namespace Hps
 {
-    TCPServer::TCPServer()
-    {
-    }
-
     int TCPServer::Run(ProgArgs const& progArgs)
     {
         try
