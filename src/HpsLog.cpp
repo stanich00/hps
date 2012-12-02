@@ -7,6 +7,8 @@
 #include <stdio.h>
 #include <sys/time.h>
 #include <pthread.h>
+#include <string.h>
+
 
 namespace Hps
 {
@@ -20,6 +22,12 @@ namespace Hps
     {
         Locker lock(m_mutex);
         m_level = level;
+    }
+
+    void Log::SetLevel(std::string const& level)
+    {
+        Level const lev = LevelFromStr(level);
+        SetLevel(lev);
     }
 
     void Log::Msg(Level level, char const* format, ...) const
@@ -47,13 +55,12 @@ namespace Hps
         va_end(args);
     }
 
-    char const* Log::Format(Level level, const char* format, va_list args, char *output, size_t outputSize) const
+    char const* Log::Format(Level level, const char* format, va_list& args, char *output, size_t outputSize) const
     {
         // format args
         char bufArgs[bufferSize];
         int const count = vsnprintf(bufArgs, sizeof(bufArgs) - 1, format, args);
-        bufArgs[count - 1] = 0;
-
+        bufArgs[count] = 0;
         // format timestamp, level, thread id, message
         char timeStamp[bufferSize];
         snprintf(output, outputSize, "%s\t%s\t%u\t%s\n",
@@ -84,6 +91,17 @@ namespace Hps
         case Fatal: return "fatal";
         default: assert(!"Error in LevelStr: Unexpected level");
         }
+    }
+
+    Log::Level Log::LevelFromStr(std::string const& sLevel) const
+    {
+        if(strcasecmp(sLevel.c_str(), "debug") == 0)   return Debug;
+        if(strcasecmp(sLevel.c_str(), "info")  == 0)   return Info;
+        if(strcasecmp(sLevel.c_str(), "warn")  == 0)   return Warn;
+        if(strcasecmp(sLevel.c_str(), "error") == 0)   return Error;
+        if(strcasecmp(sLevel.c_str(), "fatal") == 0)   return Fatal;
+
+        return m_level;
     }
 
 } // namespace Hps

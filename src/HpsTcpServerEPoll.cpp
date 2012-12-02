@@ -57,10 +57,9 @@ namespace Hps
         };
 
         // get settings (port)
-        std::string const sport = m_config->GetParam("SERVER_PORT");
+        std::string const sport = m_config->GetStrParam("SERVER_PORT");
         // check if port is correct
-        int const port = atoi(sport.c_str());
-        if(port == 0)
+        if(sport.empty())
             throw std::runtime_error("Port number is incorrect: 0");
 
         // get addr info
@@ -83,6 +82,9 @@ namespace Hps
             if (fd == -1)
                 continue;
 
+            int yes = 1;
+            setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes));
+
             if(bind (fd, rp->ai_addr, rp->ai_addrlen) == 0)
                 break; // success
 
@@ -94,11 +96,7 @@ namespace Hps
             throw std::runtime_error("Error in creating socket or binding");
 
         // set socket non-blocking
-        int const flags = fcntl(fd, F_GETFL, 0);
-        if(flags < 0)
-            throw std::runtime_error("F_GETFL error (server)");
-        if(fcntl(fd, F_SETFL, flags | O_NONBLOCK) < 0)
-            throw std::runtime_error("F_SETFL error (server)");
+        MakeNoneBlocking(fd);
 
         // listen socket
         if(listen(fd, 10) == -1)
@@ -107,8 +105,7 @@ namespace Hps
             throw std::runtime_error("Error in listening");
         }
 
-        GetLog().Msg(Log::Info, "Listening on port: %s", port);
-
+        GetLog().Msg(Log::Info, "Listening on port: %s", sport.c_str());
         return fd;
     }
 
@@ -125,9 +122,10 @@ namespace Hps
         if(epoll_ctl(efd, EPOLL_CTL_ADD, sfd, &event) == -1)
             throw std::runtime_error("Error in epoll_ctl");
 
+        // TODO: here threads can be create
+        int const nMaxEventCount = m_config->GetIntParam("MAX_EVENT_COUNT");
         assert(nMaxEventCount > 0);
         std::vector<epoll_event> events(nMaxEventCount); // Buffer where events are returned
-        //events = calloc (MAXEVENTS, sizeof event);
         for(;;)
         {
             int const n = epoll_wait (efd, &events[0], nMaxEventCount, -1);
@@ -145,7 +143,7 @@ namespace Hps
                 else if(sfd == events[i].data.fd)
                 {
                     // a notification on the listening socket (one or more incoming connections)
-                    for(;;)
+                    for(;;) // TODO: what for is this loop?
                     {
                         sockaddr in_addr;
                         memset(&in_addr, 0, sizeof(in_addr));
@@ -166,6 +164,7 @@ namespace Hps
                             }
                         }
 
+                        // TODO: what for is the next code? for logging purposes?
                         char hbuf[NI_MAXHOST];
                         char sbuf[NI_MAXSERV];
                         int const r = getnameinfo (&in_addr, in_len,
@@ -179,23 +178,19 @@ namespace Hps
                                          infd, hbuf, sbuf);
                         }
 
-                        // Make the incoming socket non-blocking and add it to the list of fds to monitor
-                        int const flags = fcntl(infd, F_GETFL, 0);
-                        if(flags < 0)
-                            throw std::runtime_error("F_GETFL error (client)");
-                        if(fcntl(infd, F_SETFL, flags | O_NONBLOCK) < 0)
-                            throw std::runtime_error("F_SETFL error (client)");
+                        // Make the incoming socket non-blocking
+                        MakeNoneBlocking(infd);
 
+                        // register descriptor on epoll instance
                         event.data.fd = infd;
                         event.events = EPOLLIN | EPOLLET;
                         if(epoll_ctl (efd, EPOLL_CTL_ADD, infd, &event) == -1)
                             throw(std::runtime_error("Error in epoll_ctl"));
-                    }
+                    } // for(;;)
                     continue;
                 }
                 else
                 {
-                    HandleConnection(events[i].data.fd, m_config);
                     if(HandleConnection(events[i].data.fd, m_config) != 0)
                         GetLog().Msg(Log::Error, "Could not handle connection");
 
@@ -203,9 +198,10 @@ namespace Hps
                     shutdown(events[i].data.fd, SHUT_RDWR);
                     close(events[i].data.fd);
                 }
-            }
+            } // for(int ...)
         } // for(;;)
 
+        close(efd);
         close(sfd);
     }
 
@@ -262,5 +258,14 @@ namespace Hps
         }
 
         return 0;
+    }
+
+    void TcpServerEPoll::MakeNoneBlocking(int fd)const
+    {
+        int const flags = fcntl(fd, F_GETFL, 0);
+        if(flags < 0)
+            throw std::runtime_error("F_GETFL error (client)");
+        if(fcntl(fd, F_SETFL, flags | O_NONBLOCK) < 0)
+            throw std::runtime_error("F_SETFL error (client)");
     }
 } // namespace Hps

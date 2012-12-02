@@ -9,6 +9,8 @@
 #include <cassert>
 #include <time.h>
 #include <wordexp.h>
+#include <unistd.h>
+
 
 namespace
 {
@@ -76,7 +78,7 @@ namespace Hps
         }
         else
         {
-            GetLog().Msg(Log::Error, "Could not expand directory");
+            GetLog().Msg(Log::Error, "Could not expand directory: %s", dir.c_str());
         }
 
         wordfree(&expResult);
@@ -92,5 +94,10 @@ namespace Hps
         return fullFileName.substr(0, p);
     }
 
+    int GetNumProc()
+    {
+        int const numCPU = sysconf(_SC_NPROCESSORS_ONLN);
+        return numCPU > 0? numCPU: 1;
+    }
 } // namespace Hps
 

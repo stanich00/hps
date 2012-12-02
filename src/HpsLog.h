@@ -8,6 +8,7 @@
 #include "HpsLocker.h"
 #include "HpsLogWriter.h"
 #include <cstdarg>
+#include <string>
 
 
 namespace Hps
@@ -24,15 +25,17 @@ namespace Hps
         Log(Level level, LogWriterPtr logWriter);
 
         void SetLevel(Level level);
+        void SetLevel(std::string const& level);
 
         //output log message
         void Msg(Level level, char const* format, ...) const;
 
     private:
-        char const* Format(Level level, const char* format, va_list args,
+        char const* Format(Level level, const char* format, va_list& args,
                            char *output, size_t outputSize) const;
         char const* TimeStamp(char *output, size_t outputSize) const;
         char const* LevelToStr(Level level) const;
+        Level       LevelFromStr(std::string const& sLevel) const;
 
     private:
         // prevent from copying

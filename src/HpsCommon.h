@@ -20,9 +20,6 @@ namespace Hps
     // default name of config file
     char const* const defaultConfigFileName = "hps.cfg";
 
-    // max number of events
-    int const nMaxEventCount = 64;
-
     // get log
     Hps::Log & GetLog();
 
@@ -47,6 +44,9 @@ namespace Hps
 
     // extract directory from full file name
     std::string GetDirFromFullFileName(std::string const& fullFileName);
+
+    // get number of processor cores
+    int GetNumProc();
 
 } // namespace Hpg
 

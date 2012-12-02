@@ -21,10 +21,14 @@ namespace Hps
         Config(std::string const& configFile);
 
         // get parameter by name
-        std::string GetParam(std::string const& name);
+        std::string GetStrParam(std::string const& name);
+        int GetIntParam(std::string const& name);
+        double GetDblParam(std::string const& name);
 
     private:
         void ReadConfig();
+        void CreateDefaultConfig()const;
+        bool ParseLine(std::string const& line);
 
     private:
         typedef std::map<std::string, std::string> ParamList;

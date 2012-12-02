@@ -52,8 +52,7 @@ namespace Hps
         int yes = 1;
         setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes));
 
-        std::string const sport = m_config->GetParam("SERVER_PORT");
-        int const port = atoi(sport.c_str());
+        int const port = m_config->GetIntParam("SERVER_PORT");
         if(port == 0)
             throw std::runtime_error("Port number is incorrect: 0");
 
@@ -75,7 +74,7 @@ namespace Hps
             throw std::runtime_error("Error in listening");
         }
 
-        GetLog().Msg(Log::Info, "Listening on port: %s", port);
+        GetLog().Msg(Log::Info, "Listening on port: %d", port);
 
         return fd;
     }
