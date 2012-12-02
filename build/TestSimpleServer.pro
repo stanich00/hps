@@ -22,7 +22,8 @@ SOURCES += \
     ../src/HpsProgArgs.cpp \
     ../src/HpsConfig.cpp \
     ../src/HpsTcpServer.cpp \
-    ../src/main.cpp
+    ../src/main.cpp \
+    ../src/HpsTcpServerEPoll.cpp
 
 HEADERS += \
     ../src/HpsLog.h \
@@ -33,4 +34,5 @@ HEADERS += \
     ../src/HpsLogWriter.h \
     ../src/HpsProgArgs.h \
     ../src/HpsConfig.h \
-    ../src/HpsTcpServer.h
+    ../src/HpsTcpServer.h \
+    ../src/HpsTcpServerEPoll.h
