@@ -6,7 +6,9 @@ import threading
 from threading import Thread
 
 def TestConnect():
-	print hex(threading.current_thread().ident), " started"
+	thread_id = threading.current_thread().ident
+	print hex(thread_id), " started"
+	
 	HOST = '127.0.0.1'    
 	PORT = 10000          
 	s = socket.socket(socket.AF_INET,  socket.SOCK_STREAM)
@@ -14,12 +16,13 @@ def TestConnect():
 
 	msg = "Hello"
 	s.send(msg)
-	print "Sent: ", msg
+	print  hex(thread_id), " Sent: ", msg
 
 	data = s.recv(1024)
 	s.close()
-	print "Recieved: ", repr(data)
-	print hex(threading.current_thread().ident), " finished"
+	print  hex(thread_id), " Recieved: ", repr(data)
+
+	print hex(thread_id), " finished"
 
 
 # start here
