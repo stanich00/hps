@@ -24,13 +24,16 @@ namespace Hps
         // c-tor
         Log(Level level, LogWriterPtr logWriter);
 
+        // all public functions are thread-safe
         void SetLevel(Level level);
         void SetLevel(std::string const& level);
+        Level GetLevel()const;
 
         //output log message
         void Msg(Level level, char const* format, ...) const;
 
     private:
+        // all private functions are thread-unsafe to avoid mutex deadlock
         char const* Format(Level level, const char* format, va_list& args,
                            char *output, size_t outputSize) const;
         char const* TimeStamp(char *output, size_t outputSize) const;

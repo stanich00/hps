@@ -26,8 +26,14 @@ namespace Hps
 
     void Log::SetLevel(std::string const& level)
     {
-        Level const lev = LevelFromStr(level);
-        SetLevel(lev);
+        Locker lock(m_mutex);
+        m_level = LevelFromStr(level);
+    }
+
+    Log::Level Log::GetLevel()const
+    {
+        Locker lock(m_mutex);
+        return m_level;
     }
 
     void Log::Msg(Level level, char const* format, ...) const

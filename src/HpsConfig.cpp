@@ -26,23 +26,14 @@ namespace Hps
     {
         Locker lock(m_mutex);
 
-        // check if parameters were read
-        if(m_params.empty())
-            ReadConfig();
-
-        // find and return parameter
-        ParamList::const_iterator it = m_params.find(name);
-        if(it != m_params.end())
-            return it->second;
-
-        // parameter not found
-        GetLog().Msg(Log::Error, "Coulnd not get parameter: %s", name.c_str());
-        return "";
+        return GetStrParamImpl(name);
     }
 
     int Config::GetIntParam(std::string const& name)
     {
-        std::string const s = GetStrParam(name);
+        Locker lock(m_mutex);
+
+        std::string const s = GetStrParamImpl(name);
         if(s.empty())
             return 0;
         int r = 0;
@@ -53,7 +44,9 @@ namespace Hps
 
     double Config::GetDblParam(std::string const& name)
     {
-        std::string const s = GetStrParam(name);
+        Locker lock(m_mutex);
+
+        std::string const s = GetStrParamImpl(name);
         if(s.empty())
             return 0;
         double r = 0;
@@ -133,6 +126,22 @@ namespace Hps
             return true;
         }
         return false;
+    }
+
+    std::string Config::GetStrParamImpl(std::string const& name)
+    {
+        // check if parameters were read
+        if(m_params.empty())
+            ReadConfig();
+
+        // find and return parameter
+        ParamList::const_iterator it = m_params.find(name);
+        if(it != m_params.end())
+            return it->second;
+
+        // parameter not found
+        GetLog().Msg(Log::Error, "Coulnd not get parameter: %s", name.c_str());
+        return "";
     }
 
 } // namespace Hps

@@ -27,7 +27,8 @@ namespace Hps
     {
         try
         {
-            // read config file and create list of parameters
+            // get config file name from program arguments
+            // use default config file name if there are no program arguments
             ProgArgs::List const& argList = progArgs.GetArgs();
             m_config.reset(new Config(argList.size() > 1? argList[1]: ""));
 
@@ -122,10 +123,10 @@ namespace Hps
         if(epoll_ctl(efd, EPOLL_CTL_ADD, sfd, &event) == -1)
             throw std::runtime_error("Error in epoll_ctl");
 
-        // TODO: here threads can be create
+        // TODO: here threads can be created
         int const nMaxEventCount = m_config->GetIntParam("MAX_EVENT_COUNT");
         assert(nMaxEventCount > 0);
-        std::vector<epoll_event> events(nMaxEventCount); // Buffer where events are returned
+        std::vector<epoll_event> events(nMaxEventCount); // buffer where events are returned
         for(;;)
         {
             int const n = epoll_wait (efd, &events[0], nMaxEventCount, -1);
@@ -135,7 +136,7 @@ namespace Hps
                     || (events[i].events & EPOLLHUP)
                     || (!(events[i].events & EPOLLIN)))
                 {
-                    // An error has occured on this fd, or the socket is not ready for reading
+                    // an error has occured on this fd, or the socket is not ready for reading
                     GetLog().Msg(Log::Error, "Error in epoll_wait, continue");
                     close (events[i].data.fd);
                     continue;
@@ -143,7 +144,7 @@ namespace Hps
                 else if(sfd == events[i].data.fd)
                 {
                     // a notification on the listening socket (one or more incoming connections)
-                    for(;;) // TODO: what for is this loop?
+                    for(;;)
                     {
                         sockaddr in_addr;
                         memset(&in_addr, 0, sizeof(in_addr));
@@ -164,21 +165,24 @@ namespace Hps
                             }
                         }
 
-                        // TODO: what for is the next code? for logging purposes?
-                        char hbuf[NI_MAXHOST];
-                        char sbuf[NI_MAXSERV];
-                        int const r = getnameinfo (&in_addr, in_len,
-                                                   hbuf, sizeof hbuf,
-                                                   sbuf, sizeof sbuf,
-                                                   NI_NUMERICHOST | NI_NUMERICSERV);
-                        if (r == 0)
+                        // get info for debug output
+                        if(GetLog().GetLevel() <= Log::Debug)
                         {
-                            GetLog().Msg(Log::Debug,
-                                         "Accepted connection on descriptor %d (host=%s , port=%s)",
-                                         infd, hbuf, sbuf);
+                            char hbuf[NI_MAXHOST];
+                            char sbuf[NI_MAXSERV];
+                            int const r = getnameinfo (&in_addr, in_len,
+                                                       hbuf, sizeof hbuf,
+                                                       sbuf, sizeof sbuf,
+                                                       NI_NUMERICHOST | NI_NUMERICSERV);
+                            if (r == 0)
+                            {
+                                GetLog().Msg(Log::Debug,
+                                             "Accepted connection on descriptor %d (host=%s , port=%s)",
+                                             infd, hbuf, sbuf);
+                            }
                         }
 
-                        // Make the incoming socket non-blocking
+                        // make the incoming socket non-blocking
                         MakeNoneBlocking(infd);
 
                         // register descriptor on epoll instance
@@ -186,6 +190,7 @@ namespace Hps
                         event.events = EPOLLIN | EPOLLET;
                         if(epoll_ctl (efd, EPOLL_CTL_ADD, infd, &event) == -1)
                             throw(std::runtime_error("Error in epoll_ctl"));
+
                     } // for(;;)
                     continue;
                 }

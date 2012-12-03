@@ -21,14 +21,17 @@ namespace Hps
         Config(std::string const& configFile);
 
         // get parameter by name
+        // all public functions are thread safe
         std::string GetStrParam(std::string const& name);
         int GetIntParam(std::string const& name);
         double GetDblParam(std::string const& name);
 
     private:
+        // all private functions are thread unsafe not to deadlock mutex
         void ReadConfig();
         void CreateDefaultConfig()const;
         bool ParseLine(std::string const& line);
+        std::string GetStrParamImpl(std::string const& name);
 
     private:
         typedef std::map<std::string, std::string> ParamList;
