@@ -8,20 +8,25 @@ from threading import Thread
 def TestConnect():
 	try:
 		thread_id = threading.current_thread().ident
-		print hex(thread_id), " started"
+		print hex(thread_id), "started"
 		
 		HOST = '127.0.0.1'    
 		PORT = 10000          
 		s = socket.socket(socket.AF_INET,  socket.SOCK_STREAM)
 		s.connect((HOST, PORT))
 	
-		msg = "Hello"
+		hello = "Hello"
+		msg = "".join(['*'] * (2048  - len(hello)))
+		msg += hello
 		s.send(msg)
-		print  hex(thread_id), " Sent: ", msg
+		print  hex(thread_id), "Sent message Hello"
 	
-		data = s.recv(1024)
+		data = s.recv(2048)
 		s.close()
-		print  hex(thread_id), " Recieved: ", repr(data)
+		if data.find("OK") != -1:
+			print  hex(thread_id), "Recieved OK" #, repr(data)
+		else:
+			print hex(thread_id), "Recieved ERROR"
 	
 		print hex(thread_id), " finished"
 	except Exception, e:
