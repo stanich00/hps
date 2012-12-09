@@ -24,6 +24,7 @@ namespace Hps
 
         // handle connection
         int HandleConnection(int fd, ConfigPtr const& config)const;
+        int HandleConnection2(int fd, ConfigPtr const& config)const;
 
         // make socket non-blocking
         void MakeNoneBlocking(int fd)const;

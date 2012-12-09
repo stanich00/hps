@@ -171,13 +171,13 @@ namespace Hps
                             char hbuf[NI_MAXHOST];
                             char sbuf[NI_MAXSERV];
                             int const r = getnameinfo (&in_addr, in_len,
-                                                       hbuf, sizeof hbuf,
-                                                       sbuf, sizeof sbuf,
+                                                       hbuf, sizeof(hbuf),
+                                                       sbuf, sizeof(sbuf),
                                                        NI_NUMERICHOST | NI_NUMERICSERV);
                             if (r == 0)
                             {
                                 GetLog().Msg(Log::Debug,
-                                             "Accepted connection on descriptor %d (host=%s , port=%s)",
+                                             "Accepted connection (%d): host=%s , port=%s",
                                              infd, hbuf, sbuf);
                             }
                         }
@@ -196,10 +196,11 @@ namespace Hps
                 }
                 else
                 {
-                    if(HandleConnection(events[i].data.fd, m_config) != 0)
+                    if(HandleConnection2(events[i].data.fd, m_config) != 0)
                         GetLog().Msg(Log::Error, "Could not handle connection");
 
                     // close connection
+                    GetLog().Msg(Log::Debug, "Close connection (%d)", events[i].data.fd);
                     shutdown(events[i].data.fd, SHUT_RDWR);
                     close(events[i].data.fd);
                 }
@@ -227,8 +228,6 @@ namespace Hps
                 break; // all data were read
 
             readSize += n;
-
-            usleep(100);
         }
         buffer[readSize] = 0;
 
@@ -252,12 +251,78 @@ namespace Hps
                     break; // all data were written
 
                 writeSize += n;
-
-                usleep(100);
             }
         }
         catch(std::exception const& e)
         {
+            GetLog().Msg(Log::Error, "%s", e.what());
+            return 1;
+        }
+
+        return 0;
+    }
+
+    int TcpServerEPoll::HandleConnection2(int fd, ConfigPtr const& /*config*/)const
+    {
+        GetLog().Msg(Log::Debug, "Handle connection (%d)", fd);
+
+        char buffer[bufferSize + 1];
+        size_t readSize = 0;
+        std::string input;
+
+        for(;;)
+        {
+            if(readSize == 0)
+                memset(buffer, 0, sizeof(buffer));
+
+            // read data from clien
+            int n = read(fd, buffer + readSize, bufferSize - readSize);
+
+            // check result of reading
+            if(n <= 0)
+                break; // all data were read
+
+            readSize += n;
+            if(readSize >= bufferSize)
+            {
+                input += buffer;
+                readSize = 0; // reset buffer
+            }
+        }
+        input += buffer;
+        GetLog().Msg(Log::Debug, "Recieved (%d): %d bytes (%d)", fd, input.size());
+
+        try
+        {
+            // check request
+            //if(strcasecmp(input.c_str(), "hello") != 0)
+            std::transform(input.begin(), input.end(), input.begin(), ::tolower);
+            if(input.find("hello") == std::string::npos)
+            {
+                GetLog().Msg(Log::Error, "Protocol error\nUnknown command: %s");
+                return 1;
+            }
+
+            // send response
+            char big[2048 - strlen("OK")];
+            std::fill(big, big + sizeof(big), '#');
+            big[sizeof(big) - 1] = 0;
+            std::string data = std::string("OK") + big;
+
+            size_t writeSize = 0;
+            while(writeSize < data.length())
+            {
+                int n = write(fd, data.c_str(), data.length());
+                if(n <= 0)
+                    break; // all data were written
+
+                writeSize += n;
+            }
+            GetLog().Msg(Log::Debug, "Sent (%d): %d bytes", fd, writeSize);
+        }
+        catch(std::exception const& e)
+        {
+            GetLog().Msg(Log::Error, "Error while writing 'OK' (%d)", fd);
             GetLog().Msg(Log::Error, "%s", e.what());
             return 1;
         }

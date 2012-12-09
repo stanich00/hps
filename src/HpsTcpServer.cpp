@@ -183,8 +183,6 @@ namespace Hps
                 break; // all data were read
 
             readSize += n;
-
-            usleep(100);
         }
         buffer[readSize] = 0;
 
@@ -208,8 +206,6 @@ namespace Hps
                     break; // all data were written
 
                 writeSize += n;
-
-                usleep(100);
             }
         }
         catch(std::exception const& e)
